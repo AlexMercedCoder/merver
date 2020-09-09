@@ -1,5 +1,5 @@
 {
-  "name": "merver",
+  "name": "am-merver",
   "version": "0.0.1",
   "description": "Micro Web Server for Micro Services",
   "main": "merver.js",
