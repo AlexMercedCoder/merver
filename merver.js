@@ -89,10 +89,21 @@ class Merver {
     this.PORT = config.PORT;
     this.responder = config.responder || new Responder();
     this.middler = config.middler || new Middler();
+    this.allowOrigin = config.allowOrigin || "*";
+    this.requestMethod = config.requestMethod || "*";
+    this.allowMethods = config.allowMethods || "OPTIONS, GET";
+    this.allowHeaders = config.allowHeaders || "*";
     // this.serveStatic = config.serveStatic;
     // this.publicFolder = config.publicFolder || "./public";
     this.server = http.createServer((req, res) => {
       console.log(res._headerSent);
+
+      //CORS HEADERS
+      res.setHeader("Access-Control-Allow-Origin", this.allowOrigin);
+      res.setHeader("Access-Control-Request-Method", this.requestMethod);
+      res.setHeader("Access-Control-Allow-Methods", this.allowMethods);
+      res.setHeader("Access-Control-Allow-Headers", this.allowHeaders);
+
       this.middler.runMiddleware(req, res);
       this.responder.respond(req, res);
 
