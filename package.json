@@ -1,0 +1,13 @@
+{
+  "name": "merver",
+  "version": "1.0.0",
+  "description": "Micro Web Server for Micro Services",
+  "main": "merver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
