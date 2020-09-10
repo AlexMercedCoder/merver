@@ -20,7 +20,6 @@ const ts = (str) => {
 const matchurls = (url1, url2, req) => {
   const url1b = breakurl(ts(url1));
   const url2b = breakurl(ts(url2));
-  console.log(url1b, url2b);
   const p = {};
 
   if (url1b.length === url2b.length) {
