@@ -6,9 +6,9 @@ const url = require("url");
 const classics = (req, res) => {
   req.query = url.parse(req.url, true).query;
 
-  res.json = (obj) => {
+  res.json = (obj, status = 200) => {
     try {
-      res.writeHead(200, { "Content-Type": "application/json" });
+      res.writeHead(status, { "Content-Type": "application/json" });
       res.write(JSON.stringify(obj));
     } catch (err) {
       res.write(JSON.stringify(err));
@@ -16,9 +16,9 @@ const classics = (req, res) => {
     return res.end();
   };
 
-  res.html = (html) => {
+  res.html = (html, status = 200) => {
     try {
-      res.writeHead(200, { "Content-Type": "text/html" });
+      res.writeHead(status, { "Content-Type": "text/html" });
       res.write(html);
     } catch (err) {
       res.write(err);
@@ -58,11 +58,11 @@ class Responder {
           if (route[req.method]) {
             route[req.method](req, res);
           } else {
-            res.json({ error: "no response for this verb" });
+            res.json({ error: "no response for this verb" }, 400);
           }
         }
       } catch (err) {
-        res.json({ err });
+        res.json({ err }, 400);
       }
     });
   }
@@ -105,11 +105,13 @@ class Merver {
           //   req.publicFolder = this.publicFolder;
           //   serveStatic(req, res);
           // }
-          res.write("No Response");
-          return res.end();
+          return res.json(
+            { error: `no response for ${req.method} ${req.url}` },
+            400
+          );
         }
       } catch (err) {
-        res.json({ err });
+        res.json({ err }, 400);
       }
       return 0;
     });
