@@ -15,7 +15,7 @@ const classics = (req, res) => {
     } catch (err) {
       res.write(JSON.stringify(err));
     }
-    // return res.end();
+    return res.end();
   };
 
   res.html = (html, status = 200) => {
@@ -25,7 +25,7 @@ const classics = (req, res) => {
     } catch (err) {
       res.write(err);
     }
-    // return res.end();
+    return res.end();
   };
 };
 
@@ -85,6 +85,8 @@ class Merver {
     this.requestMethod = config.requestMethod || "*";
     this.allowMethods = config.allowMethods || "OPTIONS, GET";
     this.allowHeaders = config.allowHeaders || "*";
+    this.mwTimeout = config.mwTimeout || 10;
+    this.resTimeout = config.resTimeout || 200;
     // this.serveStatic = config.serveStatic;
     // this.publicFolder = config.publicFolder || "./public";
     this.server = http.createServer((req, res) => {
@@ -98,26 +100,37 @@ class Merver {
         res.setHeader("Access-Control-Allow-Methods", this.allowMethods);
         res.setHeader("Access-Control-Allow-Headers", this.allowHeaders);
 
-        this.middler.runMiddleware(req, res);
-        this.responder.respond(req, res);
+        //MIDDLEWARE PROMISE
+        const mwPromise = new Promise((done, fail) => {
+          this.middler.runMiddleware(req, res);
+          setTimeout(done, this.mwTimeout);
+        });
 
-        if (res.headersSent) {
-        } else {
-          // if (this.serveStatic) {
-          //   req.publicFolder = this.publicFolder;
-          //   serveStatic(req, res);
-          // }
-          if (!res.headersSent) {
-            res.json(
-              { error: `no response for ${req.method} ${req.url}` },
-              400
-            );
+        //ROUTE PROMISE
+        const resPromise = new Promise((done, fail) => {
+          this.responder.respond(req, res);
+          setTimeout(done, this.resTimeout);
+        });
+
+        //Failed Response if both promises timeout
+        Promise.all([mwPromise, resPromise]).then(() => {
+          if (res.headersSent) {
+          } else {
+            // if (this.serveStatic) {
+            //   req.publicFolder = this.publicFolder;
+            //   serveStatic(req, res);
+            // }
+            if (!res.headersSent) {
+              res.json(
+                { error: `no response for ${req.method} ${req.url}` },
+                400
+              );
+            }
           }
-        }
+        });
       } catch (err) {
         res.json({ err }, 400);
       }
-      return res.end();
     });
   }
 
