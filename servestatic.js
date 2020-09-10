@@ -28,19 +28,17 @@ const serveStatic = function (req, res) {
   var fileLoc = path.join(resolvedBase, safeSuffix);
 
   fs.readFile(fileLoc, function (err, data) {
-    if (err) {
-      res.writeHead(404, "Not Found");
-      res.write("404: File Not Found!");
-      console.log("hello");
-      return res.end();
+    if (data) {
+      res.statusCode = 200;
+      const ext = path.parse(fileLoc).ext;
+      console.log(ext);
+      res.write(data);
+      res.setHeader("Content-type", mimeType[ext] || "text/plain");
     }
-
-    res.statusCode = 200;
-    const ext = path.parse(fileLoc).ext;
-    console.log(ext);
-    res.write(data);
-    res.setHeader("Content-type", mimeType[ext] || "text/plain");
-    return res.end();
+    if (err) {
+      res.json({ err });
+    }
+    // return res.end();
   });
 };
 
