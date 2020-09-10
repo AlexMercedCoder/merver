@@ -107,15 +107,17 @@ class Merver {
           //   req.publicFolder = this.publicFolder;
           //   serveStatic(req, res);
           // }
-          return res.json(
-            { error: `no response for ${req.method} ${req.url}` },
-            400
-          );
+          if (!res.headersSent) {
+            res.json(
+              { error: `no response for ${req.method} ${req.url}` },
+              400
+            );
+          }
         }
       } catch (err) {
         res.json({ err }, 400);
       }
-      res.end();
+      return res.end();
     });
   }
 
