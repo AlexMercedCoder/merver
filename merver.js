@@ -1,5 +1,6 @@
 const http = require("http");
 const url = require("url");
+const { matchurls } = require("./params");
 
 // +& MIDDLEWARE FOR ADDING CLASSIC RESPONSE FUNCIONS
 
@@ -13,7 +14,7 @@ const classics = (req, res) => {
     } catch (err) {
       res.write(JSON.stringify(err));
     }
-    return res.end();
+    // return res.end();
   };
 
   res.html = (html, status = 200) => {
@@ -23,7 +24,7 @@ const classics = (req, res) => {
     } catch (err) {
       res.write(err);
     }
-    return res.end();
+    // return res.end();
   };
 };
 
@@ -53,7 +54,7 @@ class Responder {
   respond(req, res) {
     this.response.forEach((route) => {
       try {
-        if (url.parse(req.url).pathname === route.endpoint) {
+        if (matchurls(route.endpoint, url.parse(req.url).pathname, req)) {
           route.middler ? route.middler.runMiddleware(req, res) : null;
           if (route[req.method]) {
             route[req.method](req, res);
@@ -113,7 +114,7 @@ class Merver {
       } catch (err) {
         res.json({ err }, 400);
       }
-      return 0;
+      res.end();
     });
   }
 

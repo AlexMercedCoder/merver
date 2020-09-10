@@ -91,3 +91,5 @@ res.json(response) => method of the response object that sends a JSON response
 res.html(response) => method the response object that sends response as html string
 
 req.query => object of all URL query keys and values
+
+req.params => object with any url params which are denoted using "/:param/" in your routes.

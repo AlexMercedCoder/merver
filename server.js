@@ -15,17 +15,15 @@ const responder = new Responder();
 responder.newResponse({
   endpoint: "/",
   GET: (req, res) => {
-    console.log(res.query);
     return res.html(`<h1>Hello World</h1>`);
   },
   // middler: middleWare2
 });
 
 responder.newResponse({
-  endpoint: "/cheese",
+  endpoint: "/:cheese",
   GET: (req, res) => {
-    console.log(res.query);
-    return res.json({ Hello: "world" });
+    return res.json(req.params);
   },
   // middler: middleWare2
 });
