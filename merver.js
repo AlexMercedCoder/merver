@@ -1,24 +1,6 @@
 const http = require("http");
 const url = require("url");
 
-const mimeType = {
-  ".ico": "image/x-icon",
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".json": "application/json",
-  ".css": "text/css",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".wav": "audio/wav",
-  ".mp3": "audio/mpeg",
-  ".svg": "image/svg+xml",
-  ".pdf": "application/pdf",
-  ".zip": "application/zip",
-  ".doc": "application/msword",
-  ".eot": "application/vnd.ms-fontobject",
-  ".ttf": "application/x-font-ttf",
-};
-
 // +& MIDDLEWARE FOR ADDING CLASSIC RESPONSE FUNCIONS
 
 const classics = (req, res) => {
@@ -98,6 +80,8 @@ class Merver {
     this.server = http.createServer((req, res) => {
       console.log(res._headerSent);
 
+      classics(req, res);
+
       //CORS HEADERS
       res.setHeader("Access-Control-Allow-Origin", this.allowOrigin);
       res.setHeader("Access-Control-Request-Method", this.requestMethod);
@@ -131,5 +115,4 @@ module.exports = {
   Responder,
   Merver,
   Middler,
-  classics,
 };

@@ -2,7 +2,6 @@ const { Merver, Responder, Middler, classics } = require("./merver.js");
 
 const middleWare = new Middler();
 
-middleWare.addMiddleware(classics);
 middleWare.addMiddleware((req, res) =>
   console.log(`${req.method} request to ${req.url}`)
 );
@@ -17,7 +16,16 @@ responder.newResponse({
   endpoint: "/",
   GET: (req, res) => {
     console.log(res.query);
-    return res.json(req.query);
+    return res.html(`<h1>Hello World</h1>`);
+  },
+  // middler: middleWare2
+});
+
+responder.newResponse({
+  endpoint: "/cheese",
+  GET: (req, res) => {
+    console.log(res.query);
+    return res.json({ Hello: "world" });
   },
   // middler: middleWare2
 });
@@ -26,7 +34,7 @@ const app = new Merver({
   PORT: 4001,
   responder,
   middler: middleWare,
-  serveStatic: true
+  // serveStatic: true,
 });
 
 app.listen();
