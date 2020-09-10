@@ -52,9 +52,17 @@ class Responder {
 
   respond(req, res) {
     this.response.forEach((route) => {
-      if (url.parse(req.url).pathname === route.endpoint) {
-        route.middler ? route.middler.runMiddleware(req, res) : null;
-        route[req.method](req, res);
+      try {
+        if (url.parse(req.url).pathname === route.endpoint) {
+          route.middler ? route.middler.runMiddleware(req, res) : null;
+          if (route[req.method]) {
+            route[req.method](req, res);
+          } else {
+            res.json({ error: "no response for this verb" });
+          }
+        }
+      } catch (err) {
+        res.json({ err });
       }
     });
   }
@@ -78,27 +86,30 @@ class Merver {
     // this.serveStatic = config.serveStatic;
     // this.publicFolder = config.publicFolder || "./public";
     this.server = http.createServer((req, res) => {
-      console.log(res._headerSent);
+      try {
+        //classic methods (req.query, res.html, res.json) are added
+        classics(req, res);
 
-      classics(req, res);
+        //CORS HEADERS
+        res.setHeader("Access-Control-Allow-Origin", this.allowOrigin);
+        res.setHeader("Access-Control-Request-Method", this.requestMethod);
+        res.setHeader("Access-Control-Allow-Methods", this.allowMethods);
+        res.setHeader("Access-Control-Allow-Headers", this.allowHeaders);
 
-      //CORS HEADERS
-      res.setHeader("Access-Control-Allow-Origin", this.allowOrigin);
-      res.setHeader("Access-Control-Request-Method", this.requestMethod);
-      res.setHeader("Access-Control-Allow-Methods", this.allowMethods);
-      res.setHeader("Access-Control-Allow-Headers", this.allowHeaders);
+        this.middler.runMiddleware(req, res);
+        this.responder.respond(req, res);
 
-      this.middler.runMiddleware(req, res);
-      this.responder.respond(req, res);
-
-      if (res.headersSent) {
-      } else {
-        // if (this.serveStatic) {
-        //   req.publicFolder = this.publicFolder;
-        //   serveStatic(req, res);
-        // }
-        res.write("No Response");
-        return res.end();
+        if (res.headersSent) {
+        } else {
+          // if (this.serveStatic) {
+          //   req.publicFolder = this.publicFolder;
+          //   serveStatic(req, res);
+          // }
+          res.write("No Response");
+          return res.end();
+        }
+      } catch (err) {
+        res.json({ err });
       }
       return 0;
     });
