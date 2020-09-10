@@ -9,23 +9,35 @@ const classics = (req, res) => {
   req.query = url.parse(req.url, true).query;
 
   res.json = (obj, status = 200) => {
-    try {
-      res.writeHead(status, { "Content-Type": "application/json" });
-      res.write(JSON.stringify(obj));
-    } catch (err) {
-      res.write(JSON.stringify(err));
+    if (!res.headersSent) {
+      try {
+        res.writeHead(status, { "Content-Type": "application/json" });
+        res.write(JSON.stringify(obj));
+      } catch (err) {
+        res.write(JSON.stringify(err));
+      }
+      return res.end();
+    } else {
+      console.log(
+        "Request already has been responded too, if not intended, consider extending the resTimeout config to facilitate time for promises to resolve"
+      );
     }
-    return res.end();
   };
 
   res.html = (html, status = 200) => {
-    try {
-      res.writeHead(status, { "Content-Type": "text/html" });
-      res.write(html);
-    } catch (err) {
-      res.write(err);
+    if (!res.headersSent) {
+      try {
+        res.writeHead(status, { "Content-Type": "text/html" });
+        res.write(html);
+      } catch (err) {
+        res.write(JSON.stringify(err));
+      }
+      return res.end();
+    } else {
+      console.log(
+        "Request already has been responded too, if not intended, consider extending the resTimeout config to facilitate time for promises to resolve"
+      );
     }
-    return res.end();
   };
 };
 
