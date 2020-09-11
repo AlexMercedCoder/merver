@@ -1,6 +1,7 @@
 const http = require("http");
 const url = require("url");
 const { matchurls } = require("./params");
+const querystring = require("querystring");
 // const { serveStatic } = require("./servestatic");
 
 // +& MIDDLEWARE FOR ADDING CLASSIC RESPONSE FUNCIONS
@@ -14,6 +15,7 @@ const classics = (req, res) => {
         res.writeHead(status, { "Content-Type": "application/json" });
         res.write(JSON.stringify(obj));
       } catch (err) {
+        console.error(err);
         res.write(JSON.stringify(err));
       }
       return res.end();
@@ -30,6 +32,7 @@ const classics = (req, res) => {
         res.writeHead(status, { "Content-Type": "text/html" });
         res.write(html);
       } catch (err) {
+        console.error(err);
         res.write(JSON.stringify(err));
       }
       return res.end();
@@ -54,6 +57,17 @@ class Middler {
 
   runMiddleware(req, res) {
     this.middleware.forEach((mw) => mw(req, res));
+  }
+
+  bodyParser(req, res) {
+    switch (req.headers["content-type"]) {
+      case "application/json":
+        req.body = JSON.parse(req.body);
+        break;
+      case "application/x-www-form-urlencoded":
+        req.body = querystring.decode(req.body);
+        break;
+    }
   }
 }
 
@@ -106,41 +120,71 @@ class Merver {
         //classic methods (req.query, res.html, res.json) are added
         classics(req, res);
 
+        const bodyPromise = new Promise((done, fail) => {
+          //Receive Request Body
+          let body = [];
+          req
+            .on("error", (err) => {
+              console.error(err);
+              res.json({ err });
+              fail(err);
+            })
+            .on("data", (chunk) => {
+              body.push(chunk);
+            })
+            .on("end", () => {
+              req.body = Buffer.concat(body).toString();
+              done();
+            });
+        });
+
+        //Handle Response Errors
+        res.on("error", (err) => {
+          console.error(err);
+          res.json({ err });
+        });
+
         //CORS HEADERS
         res.setHeader("Access-Control-Allow-Origin", this.allowOrigin);
         res.setHeader("Access-Control-Request-Method", this.requestMethod);
         res.setHeader("Access-Control-Allow-Methods", this.allowMethods);
         res.setHeader("Access-Control-Allow-Headers", this.allowHeaders);
 
-        //MIDDLEWARE PROMISE
-        const mwPromise = new Promise((done, fail) => {
-          this.middler.runMiddleware(req, res);
-          setTimeout(done, this.mwTimeout);
-        });
+        //Handle request after body has been streamed
+        let mwPromise;
+        let resPromise;
+        bodyPromise.then(() => {
+          //MIDDLEWARE PROMISE
+          mwPromise = new Promise((done, fail) => {
+            this.middler.runMiddleware(req, res);
+            setTimeout(done, this.mwTimeout);
+          });
 
-        //ROUTE PROMISE
-        const resPromise = new Promise((done, fail) => {
-          this.responder.respond(req, res);
-          setTimeout(done, this.resTimeout);
-        });
+          //ROUTE PROMISE
+          resPromise = new Promise((done, fail) => {
+            this.responder.respond(req, res);
+            setTimeout(done, this.resTimeout);
+          });
 
-        //Failed Response if both promises timeout
-        Promise.all([mwPromise, resPromise]).then(() => {
-          if (res.headersSent) {
-          } else {
-            // if (this.serveStatic) {
-            //   req.publicFolder = this.publicFolder;
-            //   serveStatic(req, res);
-            // }
-            if (!res.headersSent) {
-              res.json(
-                { error: `no response for ${req.method} ${req.url}` },
-                400
-              );
+          //Failed Response if both promises timeout
+          Promise.all([mwPromise, resPromise]).then(() => {
+            if (res.headersSent) {
+            } else {
+              // if (this.serveStatic) {
+              //   req.publicFolder = this.publicFolder;
+              //   serveStatic(req, res);
+              // }
+              if (!res.headersSent) {
+                res.json(
+                  { error: `no response for ${req.method} ${req.url}` },
+                  400
+                );
+              }
             }
-          }
+          });
         });
       } catch (err) {
+        console.error(err);
         res.json({ err }, 400);
       }
     });

@@ -34,7 +34,7 @@ app.listen();
 **mwTimeout:**Amount of time in milliseconds before middleware timesout, useful if a lot of async processes in your middleware you want completed before responses. Defaults to 10 milliseconds
 **resTimeout:**Amount of time in milliseconds before routes timeout, useful if a lot of your routes complete async tasks like db call, defaults to 200 milliseconds.
 
-* When both timeouts occur the request will get a default "no response"
+- When both timeouts occur the request will get a default "no response"
 
 ### methods
 
@@ -86,6 +86,14 @@ middleWare.addMiddleware((req, res) =>
 const middleWare2 = new Middler();
 
 middleWare2.addMiddleware((req, res) => console.log("I am middleware 2!"));
+```
+
+### built-in middleware
+
+middler.bodyparser - can handle json and urlencoded data
+
+```js
+middleware.addMiddleware(middleware.bodyparser);
 ```
 
 ## Other

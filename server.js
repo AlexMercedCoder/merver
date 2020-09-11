@@ -6,6 +6,8 @@ middleWare.addMiddleware((req, res) =>
   console.log(`${req.method} request to ${req.url}`)
 );
 
+middleWare.addMiddleware(middleWare.bodyParser);
+
 const middleWare2 = new Middler();
 
 middleWare2.addMiddleware((req, res) => console.log("I am middleware 2!"));
@@ -23,6 +25,8 @@ responder.newResponse({
 responder.newResponse({
   endpoint: "/:cheese",
   GET: (req, res) => {
+    console.log(req.headers);
+    console.log(req.body);
     return res.json(req.params);
   },
   // middler: middleWare2
