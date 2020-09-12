@@ -36,7 +36,7 @@ const app = new Merver({
   PORT: 4001,
   responder,
   middler: middleWare,
-  // serveStatic: true,
+  serveStatic: true,
 });
 
 app.listen();

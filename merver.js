@@ -2,7 +2,7 @@ const http = require("http");
 const url = require("url");
 const { matchurls } = require("./params");
 const querystring = require("querystring");
-// const { serveStatic } = require("./servestatic");
+const nodeStatic = require("node-static");
 
 // +& MIDDLEWARE FOR ADDING CLASSIC RESPONSE FUNCIONS
 
@@ -112,9 +112,13 @@ class Merver {
     this.allowMethods = config.allowMethods || "OPTIONS, GET";
     this.allowHeaders = config.allowHeaders || "*";
     this.mwTimeout = config.mwTimeout || 10;
-    this.resTimeout = config.resTimeout || 200;
-    // this.serveStatic = config.serveStatic;
-    // this.publicFolder = config.publicFolder || "./public";
+    this.resTimeout = config.resTimeout || 500;
+    this.serveStatic = config.serveStatic;
+    this.publicFolder = config.publicFolder || "./public";
+    this.cache = config.cache || 3000;
+    this.static = new nodeStatic.Server(this.publicFolder, {
+      cache: this.cache,
+    });
     this.server = http.createServer((req, res) => {
       try {
         //classic methods (req.query, res.html, res.json) are added
@@ -166,26 +170,38 @@ class Merver {
             setTimeout(done, this.resTimeout);
           });
 
+          //Serve Files
+
           //Failed Response if both promises timeout
           Promise.all([mwPromise, resPromise]).then(() => {
             if (res.headersSent) {
             } else {
-              // if (this.serveStatic) {
-              //   req.publicFolder = this.publicFolder;
-              //   serveStatic(req, res);
-              // }
-              if (!res.headersSent) {
-                res.json(
-                  { error: `no response for ${req.method} ${req.url}` },
-                  400
-                );
+              if (this.serveStatic) {
+                this.static.serve(req, res, function (err, result) {
+                  if (err) {
+                    // There was an error serving the file
+                    console.error(
+                      "Error serving " + req.url + " - " + err.message
+                    );
+
+                    // Respond to the client
+                    res.json({ err });
+                  }
+                });
+              } else {
+                if (!res.headersSent) {
+                  res.json(
+                    { error: `no response for ${req.method} ${req.url}` },
+                    400
+                  );
+                }
               }
             }
           });
         });
       } catch (err) {
         console.error(err);
-        res.json({ err }, 400);
+        res.json({ err: `No Response for ${req.method} - ${req.url}` }, 400);
       }
     });
   }
