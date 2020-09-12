@@ -1,6 +1,6 @@
 {
   "name": "am-merver",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Micro Web Server for Micro Services",
   "main": "merver.js",
   "scripts": {
