@@ -71,7 +71,7 @@ responder.newResponse({
 });
 
 responder.newResponse({
-  endpoint: "/cheese",
+  endpoint: "/cheese/:param",
   GET: (req, res) => {
     console.log(res.query);
     return res.json({ Hello: "world" });
@@ -79,6 +79,8 @@ responder.newResponse({
   // middler: middleWare2
 });
 ```
+
+*be careful with params as they may capture reference to static files, for example the route "/:param" will end up prioritized over "/index.html"*
 
 The Responder Object registers routes and their responses. There is one method...
 
@@ -121,3 +123,23 @@ res.html(response) => method the response object that sends response as html str
 req.query => object of all URL query keys and values
 
 req.params => object with any url params which are denoted using "/:param/" in your routes.
+
+## Running Merver via HTTPS
+
+Merver.init() the server callback function seperated from the http object in case you'd like to pass it to an http server. Here you go!
+
+```js
+const Merver = require('merver)
+const fs = require('fs')
+const https = require('https')
+const config = require('./config.js')
+const app = new Merver(config)
+
+https.createServer({
+  key: fs.readFileSync('server.key'),
+  cert: fs.readFileSync('server.cert')
+}, (req, res) => app.init(req, res, app))
+.listen(3000, function () {
+  console.log('Example app listening on port 3000! Go to https://localhost:3000/')
+})
+```

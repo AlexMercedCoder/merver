@@ -119,97 +119,100 @@ class Merver {
     this.static = new nodeStatic.Server(this.publicFolder, {
       cache: this.cache,
     });
-    this.server = http.createServer((req, res) => {
-      try {
-        //classic methods (req.query, res.html, res.json) are added
-        classics(req, res);
-
-        const bodyPromise = new Promise((done, fail) => {
-          //Receive Request Body
-          let body = [];
-          req
-            .on("error", (err) => {
-              console.error(err);
-              res.json({ err });
-              fail(err);
-            })
-            .on("data", (chunk) => {
-              body.push(chunk);
-            })
-            .on("end", () => {
-              req.body = Buffer.concat(body).toString();
-              done();
-            });
-        });
-
-        //Handle Response Errors
-        res.on("error", (err) => {
-          console.error(err);
-          res.json({ err });
-        });
-
-        //CORS HEADERS
-        res.setHeader("Access-Control-Allow-Origin", this.allowOrigin);
-        res.setHeader("Access-Control-Request-Method", this.requestMethod);
-        res.setHeader("Access-Control-Allow-Methods", this.allowMethods);
-        res.setHeader("Access-Control-Allow-Headers", this.allowHeaders);
-
-        //Handle request after body has been streamed
-        let mwPromise;
-        let resPromise;
-        bodyPromise.then(() => {
-          //MIDDLEWARE PROMISE
-          mwPromise = new Promise((done, fail) => {
-            this.middler.runMiddleware(req, res);
-            setTimeout(done, this.mwTimeout);
-          });
-
-          //ROUTE PROMISE
-          resPromise = new Promise((done, fail) => {
-            this.responder.respond(req, res);
-            setTimeout(done, this.resTimeout);
-          });
-
-          //Serve Files
-
-          //Failed Response if both promises timeout
-          Promise.all([mwPromise, resPromise]).then(() => {
-            if (res.headersSent) {
-            } else {
-              if (this.serveStatic) {
-                this.static.serve(req, res, function (err, result) {
-                  if (err) {
-                    // There was an error serving the file
-                    console.error(
-                      "Error serving " + req.url + " - " + err.message
-                    );
-
-                    // Respond to the client
-                    res.json({ err });
-                  }
-                });
-              } else {
-                if (!res.headersSent) {
-                  res.json(
-                    { error: `no response for ${req.method} ${req.url}` },
-                    400
-                  );
-                }
-              }
-            }
-          });
-        });
-      } catch (err) {
-        console.error(err);
-        res.json({ err: `No Response for ${req.method} - ${req.url}` }, 400);
-      }
-    });
+    console.log(this);
+    this.server = http.createServer((req, res) => this.init(req, res, this));
   }
 
   listen(callback) {
     this.server.listen(this.PORT);
     console.log(`Listening on port ${this.PORT}`);
     callback ? callback() : null;
+  }
+
+  init(req, res, merv) {
+    try {
+      //classic methods (req.query, res.html, res.json) are added
+      classics(req, res);
+
+      const bodyPromise = new Promise((done, fail) => {
+        //Receive Request Body
+        let body = [];
+        req
+          .on("error", (err) => {
+            console.error(err);
+            res.json({ err });
+            fail(err);
+          })
+          .on("data", (chunk) => {
+            body.push(chunk);
+          })
+          .on("end", () => {
+            req.body = Buffer.concat(body).toString();
+            done();
+          });
+      });
+
+      //Handle Response Errors
+      res.on("error", (err) => {
+        console.error(err);
+        res.json({ err });
+      });
+
+      //CORS HEADERS
+      res.setHeader("Access-Control-Allow-Origin", merv.allowOrigin);
+      res.setHeader("Access-Control-Request-Method", merv.requestMethod);
+      res.setHeader("Access-Control-Allow-Methods", merv.allowMethods);
+      res.setHeader("Access-Control-Allow-Headers", merv.allowHeaders);
+
+      //Handle request after body has been streamed
+      let mwPromise;
+      let resPromise;
+      bodyPromise.then(() => {
+        //MIDDLEWARE PROMISE
+        mwPromise = new Promise((done, fail) => {
+          merv.middler.runMiddleware(req, res);
+          setTimeout(done, merv.mwTimeout);
+        });
+
+        //ROUTE PROMISE
+        resPromise = new Promise((done, fail) => {
+          merv.responder.respond(req, res);
+          setTimeout(done, merv.resTimeout);
+        });
+
+        //Serve Files
+
+        //Failed Response if both promises timeout
+        Promise.all([mwPromise, resPromise]).then(() => {
+          if (res.headersSent) {
+          } else {
+            if (merv.serveStatic) {
+              merv.static.serve(req, res, function (err, result) {
+                if (err) {
+                  // There was an error serving the file
+                  console.error(
+                    "Error serving " + req.url + " - " + err.message
+                  );
+
+                  // Respond to the client
+                  res.json({ err });
+                }
+              });
+            } else {
+              if (!res.headersSent) {
+                res.json(
+                  { error: `no response for ${req.method} ${req.url}` },
+                  400
+                );
+              }
+            }
+          }
+        });
+      });
+    } catch (err) {
+      console.error(err);
+      res.json({ err: `No Response for ${req.method} - ${req.url}` }, 400);
+    }
   }
 }
 
