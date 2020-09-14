@@ -119,7 +119,6 @@ class Merver {
     this.static = new nodeStatic.Server(this.publicFolder, {
       cache: this.cache,
     });
-    console.log(this);
     this.server = http.createServer((req, res) => this.init(req, res, this));
   }
 
